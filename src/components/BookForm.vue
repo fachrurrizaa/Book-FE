@@ -1,61 +1,73 @@
 <script setup>
-    import { ref, watch } from 'vue';
-    import { useBooksStore } from '../stores/books';
+import { ref, watch } from 'vue'
+import { useBooksStore } from '@/stores/books'
 
-    const store = useBooksStore();
+const props = defineProps({
+  editingBook: Object
+})
 
-    // Props
-    const props = defineProps({
-        editingBook: Object, // diterima dari parent
-    });
+const emit = defineEmits(['onClearEditing'])
 
-    // Local state
-    const form = ref({ title: '', author: '', published_year: null });
-    const editingBookId = ref(null);
+const title = ref('')
+const author = ref('')
+const publishedYear = ref('')
 
-    // Watch kalau editingBook berubah
-    watch(() => props.editingBook, (newBook) => {
+const bookStore = useBooksStore()
+
+watch(
+  () => props.editingBook,
+  (newBook) => {
     if (newBook) {
-        form.value = { ...newBook };
-        editingBookId.value = newBook.id;
+      title.value = newBook.title
+      author.value = newBook.author
+      publishedYear.value = newBook.published_year
+    } else {
+      title.value = ''
+      author.value = ''
+      publishedYear.value = ''
     }
-    });
+  },
+  { immediate: true }
+)
 
-    const handleSubmit = async () => {
-        if (editingBookId.value) {
-            await store.updateBook(editingBookId.value, form.value);
-        } else {
-            await store.addBook(form.value);
-        }
-        resetForm();
-    };
+const handleSubmit = async () => {
+  const bookData = {
+    title: title.value,
+    author: author.value,
+    published_year: parseInt(publishedYear.value)
+  }
 
-    const resetForm = () => {
-        form.value = { title: '', author: '', published_year: null };
-        editingBookId.value = null;
-        // kirim event ke parent
-        emit('clear-editing');
-    };
+  if (props.editingBook) {
+    await bookStore.updateBook(props.editingBook.id, bookData)
+  } else {
+    await bookStore.addBook(bookData)
+  }
 
-    // Emit event ke parent biar bisa clear state
-    const emit = defineEmits(['clear-editing']);
+  emit('onClearEditing')
+  title.value = ''
+  author.value = ''
+  publishedYear.value = ''
+}
 </script>
 
-
 <template>
-  <form @submit.prevent="handleSubmit" class="space-y-4 mb-6">
-    <input v-model="form.title" type="text" placeholder="Title" required class="border p-2 rounded w-full" />
-    <input v-model="form.author" type="text" placeholder="Author" required class="border p-2 rounded w-full" />
-    <input v-model.number="form.published_year" type="number" placeholder="Published Year" required class="border p-2 rounded w-full" />
-
-    <div class="flex gap-2">
-      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-        {{ editingBookId ? 'Update Book' : 'Add Book' }}
-      </button>
-      <button v-if="editingBookId" @click="resetForm" type="button" class="text-gray-600 hover:underline">
-        Cancel
+  <form @submit.prevent="handleSubmit" class="space-y-4 bg-white shadow-md rounded-xl p-4 border border-gray-200">
+    <div>
+      <label class="block font-semibold">Judul</label>
+      <input v-model="title" type="text" class="w-full border px-3 py-2 rounded" required />
+    </div>
+    <div>
+      <label class="block font-semibold">Penulis</label>
+      <input v-model="author" type="text" class="w-full border px-3 py-2 rounded" required />
+    </div>
+    <div>
+      <label class="block font-semibold">Tahun Terbit</label>
+      <input v-model="publishedYear" type="number" class="w-full border px-3 py-2 rounded" required />
+    </div>
+    <div class="text-right">
+      <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+        {{ props.editingBook ? 'Update' : 'Tambah' }} Buku
       </button>
     </div>
   </form>
 </template>
-

@@ -1,24 +1,48 @@
 <script setup>
-    import { useBooksStore } from '../stores/books';
-    const store = useBooksStore();
+const props = defineProps({
+  books: Array
+})
+
+const emit = defineEmits(['onEdit', 'onDelete', 'onView'])
+
+const handleDelete = (id) => {
+  if (confirm('Yakin ingin menghapus buku ini?')) {
+    emit('onDelete', id)
+  }
+}
 </script>
 
 <template>
-  <ul>
-    <li
-      v-for="book in store.books"
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div
+      v-for="book in books"
       :key="book.id"
-      class="mb-4 border rounded p-4 flex justify-between items-center"
+      class="bg-white shadow-md rounded-xl p-4 border border-gray-200"
     >
-      <div>
-        <p class="font-semibold">{{ book.title }}</p>
-        <p class="text-sm text-gray-600">By {{ book.author }} - {{ book.published_year }}</p>
-      </div>
-      <div class="flex gap-4">
-        <button @click="$emit('edit-book', book)" class="text-blue-600 hover:underline">Edit</button>
-        <button @click="store.deleteBook(book.id)" class="text-red-600 hover:underline">Delete</button>
-      </div>
-    </li>
-  </ul>
-</template>
+      <h3 class="text-lg font-bold mb-2">{{ book.title }}</h3>
+      <p class="text-sm text-gray-700">Penulis: {{ book.author }}</p>
+      <p class="text-sm text-gray-700 mb-4">Tahun: {{ book.published_year }}</p>
 
+      <div class="flex flex-row-reverse gap-2">
+        <button
+          @click="handleDelete(book.id)"
+          class="text-red-600 hover:underline text-sm"
+        >
+          Hapus
+        </button>
+        <button
+          @click="$emit('onEdit', book)"
+          class="text-yellow-600 hover:underline text-sm"
+        >
+          Edit
+        </button>
+        <button
+          @click="$emit('onView', book.id)"
+          class="text-blue-600 hover:underline text-sm"
+        >
+          Detail
+        </button>
+      </div>
+    </div>
+  </div>
+</template>
